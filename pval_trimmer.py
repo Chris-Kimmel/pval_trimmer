@@ -4,8 +4,18 @@ Trim the 5' and 3' ends of wide-form p-value CSV files.
 
 Written for the Kim Lab (Aug 9, 2021)
 
-The user should go to "constants for the user to customize" (a section in the
-code below) and adjust the constants before running this script.
+The script takes six arguments from the command line. In order, they are:
+    - trim_from_5prime (Trim this many bases from the 5' end of each read)
+    - trim_from_3prime (Trim this many bases from the 3' end of each read)
+    - exemption_boundary_5prime (Do not trim a read's 5' end if the 5' end of
+        the untrimmed read is upstream of this position)
+    - exemption_boundary_3prime (Do not trim a read's 3' end if the 3' end of
+        the untrimmed read is downstream of this position)
+    - filepath_to_read (include .csv extension if applicable)
+    - filepath_to_write (include .csv extension if applicable)
+
+Here is an example of correct command-line usage:
+python3 pval_trimmer.py 50 50 0 9179 untrimmed.csv trimmed.csv
 
 Chris Kimmel
 chris.kimmel@live.com
@@ -17,35 +27,35 @@ chris.kimmel@live.com
 
 # pylint: disable=invalid-name,line-too-long
 
+import sys
 import pandas as pd
 
 
 ################################################################################
-##################### constants for the user to customize ######################
+################################## constants ###################################
 ################################################################################
-
-# full filepaths (including .csv extensions if applicable)
-FILEPATH_TO_READ = '/fs/project/PAS1405/GabbyLee/project/m6A_modif/WT_cellular/23456_WT_cellular.csv'
-FILEPATH_TO_WRITE = 'output.csv'
-
-TRIM_FROM_5PRIME = 50 # Trim this many bases from the 5' end of each read
-TRIM_FROM_3PRIME = 50 # Trim this many bases from the 3' end of each read
-
-# Exempt reads from 5'-end trimming when they start upstream of
-# EXEMPTION_BOUNDARY_5PRIME. Likewise, exempt a read from *3'-end* trimming if
-# the read starts *downstream* of the 3' boundary.
-EXEMPTION_BOUNDARY_5PRIME = 0
-EXEMPTION_BOUNDARY_3PRIME = 9179
 
 '''A (p-value, read_id, position) is kept if and only if this query is TRUE for
 it. The query is listed here mainly to clarify what the script does. (If you
 change the query and it doesn't work, it'll be hard to debug.)'''
 QUERY = \
-            "(dist_from_end_5prime >= @TRIM_FROM_5PRIME "\
-            "or end_5prime_0b < @EXEMPTION_BOUNDARY_5PRIME) "\
+            "(dist_from_end_5prime >= @trim_from_5prime "\
+            "or end_5prime_0b < @exemption_boundary_5prime) "\
             "and "\
-            "(dist_from_end_3prime >= @TRIM_FROM_3PRIME "\
-            "or end_3prime_0b > @EXEMPTION_BOUNDARY_3PRIME) "
+            "(dist_from_end_3prime >= @trim_from_3prime "\
+            "or end_3prime_0b > @exemption_boundary_3prime) "
+
+
+################################################################################
+############################ command-line interface ############################
+################################################################################
+
+trim_from_5prime = int(sys.argv[1])
+trim_from_3prime = int(sys.argv[2])
+exemption_boundary_5prime = int(sys.argv[3])
+exemption_boundary_3prime = int(sys.argv[4])
+filepath_to_read = sys.argv[5]
+filepath_to_write = sys.argv[6]
 
 
 ################################################################################
@@ -75,7 +85,7 @@ def widify(df):
 ################################## load data ###################################
 ################################################################################
 
-wide = load_csv(FILEPATH_TO_READ)
+wide = load_csv(filepath_to_read)
 
 if not wide.index.is_unique:
     raise NotImplementedError("There is a duplicate read ID in the given file. "
@@ -119,4 +129,4 @@ trimmed = (
 ################################## write data ##################################
 ################################################################################
 
-widify(trimmed).to_csv(FILEPATH_TO_WRITE)
+widify(trimmed).to_csv(filepath_to_write)
