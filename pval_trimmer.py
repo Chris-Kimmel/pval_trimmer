@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 '''
 pval_trimmer.py
 Trim the 5' and 3' ends of wide-form p-value CSV files.
@@ -15,7 +16,7 @@ The script takes six arguments from the command line. In order, they are:
     - filepath_to_write (include .csv extension if applicable)
 
 Here is an example of correct command-line usage:
-python3 pval_trimmer.py 50 50 0 9179 untrimmed.csv trimmed.csv
+./pval_trimmer.py 50 50 0 9179 untrimmed.csv trimmed.csv
 
 Chris Kimmel
 chris.kimmel@live.com
